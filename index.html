@@ -80,9 +80,7 @@ body {
   cursor: pointer; display: flex; align-items: center; justify-content: center;
   -webkit-user-select: none; user-select: none;
 }
-.num-btn.sel-high { background: var(--green); color: #fff; border-color: var(--green); font-weight: 600; }
-.num-btn.sel-mid  { background: var(--amber); color: #fff; border-color: var(--amber); font-weight: 600; }
-.num-btn.sel-low  { background: var(--red);   color: #fff; border-color: var(--red);   font-weight: 600; }
+.num-btn.selected { background: var(--text); color: #fff; border-color: var(--text); font-weight: 600; }
 
 .save-bar { display: flex; align-items: center; justify-content: space-between; margin-top: 6px; gap: 12px; }
 .save-info { font-size: 12px; color: var(--dim); }
@@ -121,13 +119,14 @@ canvas { width: 100% !important; }
   border-radius: var(--rs); display: flex; align-items: center; justify-content: center;
   cursor: pointer; font-size: 16px; color: var(--mid);
 }
-.cal-wrap { background: var(--white); border: 1px solid var(--border); border-radius: var(--r); padding: 12px; }
-.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+.cal-wrap { background: var(--white); border: 1px solid var(--border); border-radius: var(--r); padding: 10px; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
 .cal-head { text-align: center; font-size: 10px; font-weight: 600; letter-spacing: 0.5px; color: var(--dim); padding: 6px 2px; text-transform: uppercase; }
 .cal-day {
-  aspect-ratio: 1; border-radius: var(--rs);
+  border-radius: var(--rs); min-height: 40px;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   font-size: 12px; gap: 3px; cursor: default; border: 1px solid transparent;
+  padding: 4px 2px;
 }
 .cal-day.has-data { cursor: pointer; }
 .cal-day.sel-day { border-color: var(--text) !important; background: var(--light) !important; }
@@ -179,10 +178,10 @@ canvas { width: 100% !important; }
     <div class="icon-btn" onclick="showPage('settings')">&#9881;</div>
   </div>
   <div class="nav">
-    <button class="nav-btn active" onclick="showPage('today')">Hoy</button>
-    <button class="nav-btn" onclick="showPage('trends')">Tendencias</button>
-    <button class="nav-btn" onclick="showPage('month')">Mes</button>
-    <button class="nav-btn" onclick="showPage('settings')">Config</button>
+    <button class="nav-btn active" onclick="showPage('today')">Today</button>
+    <button class="nav-btn" onclick="showPage('trends')">Trends</button>
+    <button class="nav-btn" onclick="showPage('month')">Month</button>
+    <button class="nav-btn" onclick="showPage('settings')">Settings</button>
   </div>
 
   <div class="page active" id="page-today">
@@ -195,10 +194,10 @@ canvas { width: 100% !important; }
 
   <div class="page" id="page-trends">
     <div class="range-row">
-      <button class="range-btn active" onclick="setRange(7,this)">7 dias</button>
-      <button class="range-btn" onclick="setRange(14,this)">14 dias</button>
-      <button class="range-btn" onclick="setRange(30,this)">30 dias</button>
-      <button class="range-btn" onclick="setRange(0,this)">Todo</button>
+      <button class="range-btn active" onclick="setRange(7,this)">7 days</button>
+      <button class="range-btn" onclick="setRange(14,this)">14 days</button>
+      <button class="range-btn" onclick="setRange(30,this)">30 days</button>
+      <button class="range-btn" onclick="setRange(0,this)">All</button>
     </div>
     <div id="trendsContainer"></div>
   </div>
@@ -216,14 +215,14 @@ canvas { width: 100% !important; }
   </div>
 
   <div class="page" id="page-settings">
-    <div class="section-label">Mis preguntas</div>
+    <div class="section-label">My questions</div>
     <div id="questionsEdit"></div>
-    <button class="add-q-btn" onclick="addQuestion()">+ Agregar pregunta</button>
-    <button class="btn-primary" onclick="saveSettings()">Guardar configuracion</button>
+    <button class="add-q-btn" onclick="addQuestion()">+ Add question</button>
+    <button class="btn-primary" onclick="saveSettings()">Save settings</button>
     <div class="divider"></div>
-    <div class="section-label">Datos</div>
-    <button class="btn-outline" onclick="exportData()">Exportar datos (JSON)</button>
-    <button class="btn-danger" onclick="confirmClear()">Borrar todos los datos</button>
+    <div class="section-label">Data</div>
+    <button class="btn-outline" onclick="exportData()">Export data (JSON)</button>
+    <button class="btn-danger" onclick="confirmClear()">Delete all data</button>
     <div class="footer-note">Daily Questions - Marshall Goldsmith</div>
   </div>
 </div>
@@ -232,12 +231,12 @@ canvas { width: 100% !important; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <script>
 var DEFAULT_QUESTIONS = [
-  "Hiciste tu mejor esfuerzo para establecer metas claras?",
-  "Hiciste tu mejor esfuerzo para progresar hacia esas metas?",
-  "Hiciste tu mejor esfuerzo para encontrar significado en lo que hiciste?",
-  "Hiciste tu mejor esfuerzo para ser feliz?",
-  "Hiciste tu mejor esfuerzo para construir relaciones positivas?",
-  "Hiciste tu mejor esfuerzo para estar completamente comprometido?"
+  "Did you do your best to set clear goals today?",
+  "Did you do your best to make progress toward your goals today?",
+  "Did you do your best to find meaning today?",
+  "Did you do your best to be happy today?",
+  "Did you do your best to build positive relationships today?",
+  "Did you do your best to be fully engaged today?"
 ];
 
 var state = {
@@ -303,9 +302,7 @@ function scoreColor(v) {
 }
 
 function selClass(n) {
-  if (n >= 8) return 'sel-high';
-  if (n >= 5) return 'sel-mid';
-  return 'sel-low';
+  return 'selected';
 }
 
 function showToast(msg) {
@@ -317,9 +314,9 @@ function showToast(msg) {
 
 function renderDate() {
   var d = new Date();
-  var DAYS = ['Domingo','Lunes','Martes','Miercoles','Jueves','Viernes','Sabado'];
-  var MONTHS = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
-  document.getElementById('headerDate').textContent = DAYS[d.getDay()] + ', ' + d.getDate() + ' de ' + MONTHS[d.getMonth()];
+  var DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  var MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('headerDate').textContent = DAYS[d.getDay()] + ', ' + MONTHS[d.getMonth()] + ' ' + d.getDate();
 }
 
 function showPage(name) {
@@ -393,22 +390,22 @@ function updateSaveBar(isSaved) {
   var filled = todayValues.filter(function(v) { return v !== null; }).length;
   if (isSaved) {
     info.className = 'save-info saved';
-    info.textContent = 'Guardado (' + filled + '/' + state.questions.length + ')';
+    info.textContent = 'Saved (' + filled + '/' + state.questions.length + ')';
   } else {
     info.className = 'save-info';
-    info.textContent = filled === 0 ? 'Sin responder' : filled + ' / ' + state.questions.length + ' respondidas';
+    info.textContent = filled === 0 ? 'Not answered' : filled + ' / ' + state.questions.length + ' answered';
   }
 }
 
 function saveToday() {
   if (todayValues.filter(function(v) { return v !== null; }).length === 0) {
-    showToast('Responde al menos una pregunta');
+    showToast('Answer at least one question');
     return;
   }
   state.entries[todayKey()] = todayValues.slice();
   persist();
   updateSaveBar(true);
-  showToast('Guardado');
+  showToast('Saved');
 }
 
 function setRange(n, btn) {
@@ -440,7 +437,7 @@ function renderTrends() {
   container.innerHTML = '';
 
   if (keys.length === 0) {
-    container.innerHTML = '<div class="empty">Sin datos en este periodo.<br>Comenza respondiendo las preguntas de hoy.</div>';
+    container.innerHTML = '<div class="empty">No data in this period.<br>Start by answering today\'s questions.</div>';
     return;
   }
 
@@ -473,10 +470,10 @@ function renderTrends() {
           '<div class="trend-avg" style="color:' + col.text + '">' + a.toFixed(1) + '</div>' +
         '</div>' +
         '<div class="trend-meta">' +
-          '<div class="trend-meta-item">Mejor <strong>' + best + '</strong></div>' +
-          '<div class="trend-meta-item">Peor <strong>' + worst + '</strong></div>' +
-          '<div class="trend-meta-item">Tendencia <strong style="color:' + trendColor + '">' + trendStr + '</strong></div>' +
-          '<div class="trend-meta-item">Dias <strong>' + valid.length + '</strong></div>' +
+          '<div class="trend-meta-item">Best <strong>' + best + '</strong></div>' +
+          '<div class="trend-meta-item">Worst <strong>' + worst + '</strong></div>' +
+          '<div class="trend-meta-item">Trend <strong style="color:' + trendColor + '">' + trendStr + '</strong></div>' +
+          '<div class="trend-meta-item">Days <strong>' + valid.length + '</strong></div>' +
         '</div>' +
         '<canvas id="' + cid + '" height="90"></canvas>';
 
@@ -528,13 +525,13 @@ function changeMonth(dir) {
 
 function renderMonth() {
   var now = state.currentMonth;
-  var MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  var MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
   document.getElementById('monthLabel').textContent = MONTHS[now.getMonth()] + ' ' + now.getFullYear();
 
   var grid = document.getElementById('calGrid');
   grid.innerHTML = '';
 
-  var heads = ['Lu','Ma','Mi','Ju','Vi','Sa','Do'];
+  var heads = ['Mo','Tu','We','Th','Fr','Sa','Su'];
   for (var i = 0; i < heads.length; i++) {
     var h = document.createElement('div');
     h.className = 'cal-head';
@@ -604,8 +601,8 @@ function renderMonth() {
 function renderDayDetail(key) {
   var entry = state.entries[key];
   var d = new Date(key + 'T12:00:00');
-  var DAYS = ['Domingo','Lunes','Martes','Miercoles','Jueves','Viernes','Sabado'];
-  var MONTHS = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  var DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  var MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
   var rows = '';
   for (var i = 0; i < state.questions.length; i++) {
@@ -621,8 +618,8 @@ function renderDayDetail(key) {
 
   document.getElementById('dayDetail').innerHTML =
     '<div class="day-detail">' +
-      '<div class="day-detail-title">' + DAYS[d.getDay()] + ', ' + d.getDate() + ' de ' + MONTHS[d.getMonth()] + '</div>' +
-      (rows || '<div style="color:#aaa;font-size:12px">Sin respuestas</div>') +
+      '<div class="day-detail-title">' + DAYS[d.getDay()] + ', ' + MONTHS[d.getMonth()] + ' ' + d.getDate() + '</div>' +
+      (rows || '<div style="color:#aaa;font-size:12px">No answers recorded</div>') +
     '</div>';
 }
 
@@ -667,7 +664,7 @@ function addQuestion() {
 }
 
 function deleteQuestion(i) {
-  if (state.questions.length <= 1) { showToast('Debe haber al menos 1 pregunta'); return; }
+  if (state.questions.length <= 1) { showToast('Must have at least 1 question'); return; }
   state.questions.splice(i, 1);
   renderSettings();
 }
@@ -679,11 +676,11 @@ function saveSettings() {
     var v = inputs[i].value.trim();
     if (v) newQs.push(v);
   }
-  if (!newQs.length) { showToast('Ingresa al menos 1 pregunta'); return; }
+  if (!newQs.length) { showToast('Add at least 1 question'); return; }
   state.questions = newQs;
   persist();
   renderToday();
-  showToast('Configuracion guardada');
+  showToast('Settings saved');
 }
 
 function exportData() {
@@ -693,15 +690,15 @@ function exportData() {
   a.href = URL.createObjectURL(blob);
   a.download = 'daily-questions-' + todayKey() + '.json';
   a.click();
-  showToast('Exportado');
+  showToast('Exported');
 }
 
 function confirmClear() {
-  if (confirm('Borrar todos los datos? No se puede deshacer.')) {
+  if (confirm('Delete all data? This cannot be undone.')) {
     state.entries = {};
     persist();
     renderToday();
-    showToast('Datos borrados');
+    showToast('Data deleted');
   }
 }
 
