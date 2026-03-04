@@ -326,9 +326,9 @@ canvas { width: 100% !important; }
     <div class="modal">
       <div class="modal-icon">&#9728;</div>
       <div class="modal-title">Ready to start a new day?</div>
-      <div class="modal-sub">Yesterday's morning entry will be archived. Your evening data is already saved.</div>
+      <div class="modal-sub">Every day is a fresh start. Are you ready to set your intentions for today?</div>
       <button class="modal-btn" onclick="startNewDay()">Yes, start fresh</button>
-      <button class="modal-btn-secondary" onclick="dismissNewDay()">Not yet, keep yesterday</button>
+      <button class="modal-btn-secondary" onclick="dismissNewDay()">Not yet</button>
     </div>
   </div>
 
@@ -399,6 +399,7 @@ canvas { width: 100% !important; }
         <div class="save-info" id="sun-saveInfo">Not saved</div>
         <button class="save-btn" onclick="saveSun()">Save</button>
       </div>
+      <div id="sun-newday-btn-wrap" style="margin-top:12px;text-align:center;"></div>
     </div>
 
     <div class="page" id="sun-page-trends">
@@ -511,8 +512,7 @@ var state = {
     selectedDay: null,
     charts: {}
   },
-  lastSeenDate: null,
-  newDayDismissedFor: null
+  lastSeenDate: null
 };
 
 var moonValues = [];
@@ -534,7 +534,6 @@ function loadState() {
       if (p.moon.entries)   state.moon.entries   = p.moon.entries;
     }
     if (p.lastSeenDate) state.lastSeenDate = p.lastSeenDate;
-    if (p.newDayDismissedFor) state.newDayDismissedFor = p.newDayDismissedFor;
   } catch(e) {}
 }
 
@@ -543,8 +542,7 @@ function persist() {
     localStorage.setItem('dr-v2', JSON.stringify({
       sun: { draft: state.sun.draft, entries: state.sun.entries },
       moon: { questions: state.moon.questions, entries: state.moon.entries },
-      lastSeenDate: state.lastSeenDate,
-      newDayDismissedFor: state.newDayDismissedFor
+      lastSeenDate: state.lastSeenDate
     }));
   } catch(e) {}
 }
@@ -587,39 +585,54 @@ function getKeys(entries, range) {
 /* ============================================================
    NEW DAY LOGIC
    ============================================================ */
+function isAfterMidnight() {
+  // True if current date is later than the date stored in lastSeenDate
+  var today = todayKey();
+  return state.lastSeenDate && state.lastSeenDate < today;
+}
+
 function checkNewDay() {
   var today = todayKey();
-  // Already dismissed for today
-  if (state.newDayDismissedFor === today) return;
-  // No previous session
-  if (!state.lastSeenDate) { state.lastSeenDate = today; persist(); return; }
-  // Same day as last session
+
+  // Same day as last seen — no prompt
   if (state.lastSeenDate === today) return;
-  // It's a new day after midnight — show prompt
-  // But only if there's actually a draft to clear OR a previous day entry
-  if (state.sun.draft || state.sun.entries[state.lastSeenDate]) {
-    document.getElementById('newDayModal').classList.remove('hidden');
-  } else {
-    state.lastSeenDate = today; persist();
-  }
+
+  // Every other case (first launch, or new calendar day) — show prompt
+  document.getElementById('newDayModal').classList.remove('hidden');
 }
 
 function startNewDay() {
   var today = todayKey();
+  // Archive current draft to previous date if it has content and hasn't been saved yet
+  if (state.sun.draft && state.lastSeenDate && !state.sun.entries[state.lastSeenDate]) {
+    var d = state.sun.draft;
+    var hasContent = d.gratitude || (d.plans && d.plans.length) ||
+      (d.watchout && d.watchout.some(function(w){ return w.text.trim(); })) ||
+      (d.strive && d.strive.some(function(s){ return s.text.trim(); }));
+    if (hasContent) {
+      state.sun.entries[state.lastSeenDate] = JSON.parse(JSON.stringify(d));
+    }
+  }
   state.sun.draft = null;
   state.lastSeenDate = today;
-  state.newDayDismissedFor = null;
   persist();
   document.getElementById('newDayModal').classList.add('hidden');
   renderSunToday();
-  showToast('Fresh start. Good morning!');
+  showToast('Good morning!');
 }
 
 function dismissNewDay() {
-  var today = todayKey();
-  state.newDayDismissedFor = today;
-  persist();
+  // Just close the modal — do NOT record today's date
+  // So next time the app is opened, the prompt will appear again
   document.getElementById('newDayModal').classList.add('hidden');
+}
+
+function manualStartNewDay() {
+  if (!isAfterMidnight()) {
+    showToast('This option is only available after midnight');
+    return;
+  }
+  document.getElementById('newDayModal').classList.remove('hidden');
 }
 
 /* ============================================================
@@ -713,6 +726,14 @@ function renderSunToday() {
   renderFreetextSection('sf', draft.strive, rating);
 
   updateSunSaveBar();
+
+  // Manual new day button — only after midnight
+  var wrap = document.getElementById('sun-newday-btn-wrap');
+  if (wrap) {
+    wrap.innerHTML = isAfterMidnight()
+      ? '<button onclick="manualStartNewDay()" style="background:transparent;border:none;color:var(--dim);font-family:inherit;font-size:12px;cursor:pointer;text-decoration:underline;">Start a new day</button>'
+      : '';
+  }
 }
 
 function renderPlanItems(locked) {
