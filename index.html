@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="Daily Q">
-<title>Daily Questions</title>
+<meta name="apple-mobile-web-app-title" content="Daily Rituals">
+<title>Daily Rituals</title>
 <style>
 :root {
   --bg: #f5f4f0;
@@ -22,6 +22,12 @@
   --amber-bg: #fdf3e3;
   --red: #b02a2a;
   --red-bg: #fdf0f0;
+  --sun: #c87f0a;
+  --sun-bg: #fff8ee;
+  --sun-border: #f0d49a;
+  --moon: #3a3a6e;
+  --moon-bg: #f0f0fa;
+  --moon-border: #c8c8e8;
   --r: 10px;
   --rs: 6px;
 }
@@ -30,24 +36,35 @@ body {
   background: var(--bg);
   color: var(--text);
   font-family: -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif;
-  font-size: 14px;
-  min-height: 100vh;
+  font-size: 14px; min-height: 100vh;
   -webkit-font-smoothing: antialiased;
 }
 .app { max-width: 560px; margin: 0 auto; }
 
-.header { padding: 20px 20px 0; display: flex; justify-content: space-between; align-items: center; }
-.header h1 { font-size: 20px; font-weight: 600; letter-spacing: -0.4px; }
-.header p { font-size: 12px; color: var(--dim); margin-top: 2px; }
-.icon-btn {
-  width: 34px; height: 34px; border-radius: var(--rs);
+/* PROTOCOL SWITCHER */
+.proto-bar { display: flex; padding: 16px 20px 0; }
+.proto-btn {
+  flex: 1; padding: 12px 8px;
   border: 1px solid var(--border); background: var(--white);
-  color: var(--mid); display: flex; align-items: center; justify-content: center;
-  cursor: pointer; font-size: 15px;
+  font-family: inherit; font-size: 13px; font-weight: 500;
+  cursor: pointer; transition: all 0.2s;
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+  color: var(--dim);
 }
+.proto-btn:first-child { border-radius: var(--r) 0 0 var(--r); border-right: none; }
+.proto-btn:last-child  { border-radius: 0 var(--r) var(--r) 0; }
+.proto-btn.active-sun  { background: var(--sun-bg); color: var(--sun); border-color: var(--sun-border); font-weight: 600; z-index:1; }
+.proto-btn.active-moon { background: var(--moon-bg); color: var(--moon); border-color: var(--moon-border); font-weight: 600; z-index:1; }
+.proto-icon { font-size: 18px; line-height: 1; }
 
+/* HEADER */
+.header { padding: 12px 20px 0; }
+.header h1 { font-size: 18px; font-weight: 600; letter-spacing: -0.3px; }
+.header p  { font-size: 12px; color: var(--dim); margin-top: 2px; }
+
+/* NAV */
 .nav {
-  display: flex; gap: 2px; padding: 14px 20px;
+  display: flex; gap: 2px; padding: 12px 20px;
   position: sticky; top: 0; background: var(--bg); z-index: 10;
   border-bottom: 1px solid var(--border);
 }
@@ -58,6 +75,8 @@ body {
 }
 .nav-btn.active { background: var(--white); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
 
+.protocol { display: none; }
+.protocol.active { display: block; }
 .page { display: none; padding: 20px; }
 .page.active { display: block; }
 
@@ -66,12 +85,97 @@ body {
   text-transform: uppercase; color: var(--dim); margin-bottom: 10px;
 }
 
+/* CARDS */
 .q-card {
   background: var(--white); border: 1px solid var(--border);
   border-radius: var(--r); padding: 16px; margin-bottom: 10px;
 }
-.q-card-text { font-size: 14px; color: var(--text); line-height: 1.45; margin-bottom: 14px; }
+.q-card-label {
+  font-size: 11px; font-weight: 600; letter-spacing: 0.5px;
+  text-transform: uppercase; color: var(--dim); margin-bottom: 10px;
+}
 
+/* TEXT INPUTS */
+.text-entry {
+  width: 100%; border: none; background: transparent;
+  font-family: inherit; font-size: 13px; color: var(--text);
+  resize: none; outline: none; line-height: 1.6; min-height: 60px;
+}
+.text-entry::placeholder { color: var(--dim); }
+
+/* PLAN ITEMS */
+.plan-items { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+.plan-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  background: var(--bg); border-radius: var(--rs);
+  padding: 8px 10px; border: 1px solid var(--border);
+}
+.plan-item.done { opacity: 0.55; }
+.plan-checkbox {
+  width: 18px; height: 18px; min-width: 18px;
+  border-radius: 4px; border: 1.5px solid var(--border);
+  background: var(--white); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; margin-top: 1px;
+  transition: all 0.15s;
+}
+.plan-checkbox.checked { background: var(--green); border-color: var(--green); color: white; }
+.plan-item-text {
+  flex: 1; border: none; background: transparent;
+  font-family: inherit; font-size: 13px; color: var(--text);
+  outline: none; resize: none; min-height: 20px; line-height: 1.5;
+  padding: 0;
+}
+.plan-item-text::placeholder { color: var(--dim); }
+.plan-item-del {
+  background: transparent; border: none; color: var(--dim);
+  cursor: pointer; font-size: 16px; line-height: 1; padding: 1px 0;
+}
+.add-item-btn {
+  width: 100%; background: transparent; border: 1px dashed var(--border);
+  color: var(--dim); padding: 9px; border-radius: var(--rs);
+  font-family: inherit; font-size: 12px; cursor: pointer;
+}
+
+/* FREE TEXT SECTION ITEMS (watch out / strive) */
+.freetext-items { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+.freetext-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  background: var(--bg); border-radius: var(--rs);
+  padding: 8px 10px; border: 1px solid var(--border);
+}
+.freetext-num {
+  font-size: 11px; font-weight: 600; color: var(--dim);
+  min-width: 16px; margin-top: 2px;
+}
+.freetext-item-text {
+  flex: 1; border: none; background: transparent;
+  font-family: inherit; font-size: 13px; color: var(--text);
+  outline: none; resize: none; min-height: 20px; line-height: 1.5; padding: 0;
+}
+.freetext-item-text::placeholder { color: var(--dim); }
+.freetext-item-del {
+  background: transparent; border: none; color: var(--dim);
+  cursor: pointer; font-size: 16px; line-height: 1; padding: 1px 0;
+}
+
+/* SCORE ROW — for rating watch/strive items */
+.score-row {
+  display: flex; align-items: center; gap: 8px; margin-top: 8px;
+}
+.score-row-label { font-size: 11px; color: var(--dim); min-width: 50px; }
+.num-grid-sm { display: flex; gap: 4px; flex: 1; flex-wrap: wrap; }
+.num-btn-sm {
+  width: 28px; height: 28px;
+  border-radius: var(--rs); border: 1px solid var(--border);
+  background: var(--bg); color: var(--mid);
+  font-family: inherit; font-size: 12px; font-weight: 500;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  -webkit-user-select: none; user-select: none; flex-shrink: 0;
+}
+.num-btn-sm.selected { background: var(--text); color: #fff; border-color: var(--text); font-weight: 600; }
+
+/* FULL NUM GRID */
 .num-grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 5px; }
 .num-btn {
   aspect-ratio: 1; border-radius: var(--rs);
@@ -82,6 +186,17 @@ body {
 }
 .num-btn.selected { background: var(--text); color: #fff; border-color: var(--text); font-weight: 600; }
 
+/* PHASE BADGE */
+.phase-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11px; font-weight: 600; letter-spacing: 0.5px;
+  text-transform: uppercase; padding: 4px 10px; border-radius: 100px;
+  margin-bottom: 14px;
+}
+.phase-write { background: var(--sun-bg); color: var(--sun); border: 1px solid var(--sun-border); }
+.phase-rate  { background: var(--moon-bg); color: var(--moon); border: 1px solid var(--moon-border); }
+
+/* SAVE BAR */
 .save-bar { display: flex; align-items: center; justify-content: space-between; margin-top: 6px; gap: 12px; }
 .save-info { font-size: 12px; color: var(--dim); }
 .save-info.saved { color: var(--green); font-weight: 500; }
@@ -91,6 +206,7 @@ body {
   font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer;
 }
 
+/* RANGE */
 .range-row { display: flex; gap: 5px; margin-bottom: 18px; }
 .range-btn {
   background: var(--white); border: 1px solid var(--border); color: var(--mid);
@@ -99,6 +215,7 @@ body {
 }
 .range-btn.active { background: var(--text); color: white; border-color: var(--text); }
 
+/* TREND CARDS */
 .trend-card {
   background: var(--white); border: 1px solid var(--border);
   border-radius: var(--r); padding: 16px; margin-bottom: 10px;
@@ -109,9 +226,9 @@ body {
 .trend-meta { display: flex; gap: 16px; margin-bottom: 12px; flex-wrap: wrap; }
 .trend-meta-item { font-size: 11px; color: var(--dim); }
 .trend-meta-item strong { color: var(--mid); font-weight: 600; }
-
 canvas { width: 100% !important; }
 
+/* MONTH */
 .month-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
 .month-label { font-size: 16px; font-weight: 600; letter-spacing: -0.3px; }
 .month-arrow {
@@ -125,8 +242,7 @@ canvas { width: 100% !important; }
 .cal-day {
   border-radius: var(--rs); min-height: 40px;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  font-size: 12px; gap: 3px; cursor: default; border: 1px solid transparent;
-  padding: 4px 2px;
+  font-size: 12px; gap: 3px; cursor: default; border: 1px solid transparent; padding: 4px 2px;
 }
 .cal-day.has-data { cursor: pointer; }
 .cal-day.sel-day { border-color: var(--text) !important; background: var(--light) !important; }
@@ -137,25 +253,59 @@ canvas { width: 100% !important; }
 
 .day-detail { background: var(--white); border: 1px solid var(--border); border-radius: var(--r); padding: 16px; margin-top: 12px; }
 .day-detail-title { font-size: 13px; font-weight: 600; color: var(--mid); margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
-.detail-row { display: flex; align-items: center; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid var(--bg); gap: 12px; }
+.detail-row { display: flex; align-items: flex-start; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--bg); gap: 12px; }
 .detail-row:last-child { border-bottom: none; }
-.detail-q { font-size: 12px; color: var(--mid); flex: 1; line-height: 1.4; }
-.detail-chip { font-size: 13px; font-weight: 600; padding: 3px 10px; border-radius: 100px; min-width: 36px; text-align: center; }
+.detail-q { font-size: 12px; color: var(--mid); flex: 1; line-height: 1.4; font-weight: 600; }
+.detail-val { font-size: 12px; color: var(--text); text-align: right; max-width: 60%; line-height: 1.5; }
+.detail-chip { font-size: 13px; font-weight: 600; padding: 3px 10px; border-radius: 100px; min-width: 36px; text-align: center; white-space: nowrap; }
+.detail-check-item { font-size: 12px; color: var(--text); display: flex; align-items: flex-start; gap: 6px; line-height: 1.4; }
+.detail-check-item.done-item { color: var(--green); }
+.detail-check-item.undone-item { color: var(--dim); }
+.detail-check-list { display: flex; flex-direction: column; gap: 4px; }
 
+/* SETTINGS */
 .q-edit-card { background: var(--white); border: 1px solid var(--border); border-radius: var(--r); padding: 12px 14px; margin-bottom: 8px; display: flex; align-items: flex-start; gap: 10px; }
 .q-num { font-size: 13px; font-weight: 600; color: var(--dim); padding-top: 3px; min-width: 18px; }
 .q-input { flex: 1; background: transparent; border: none; color: var(--text); font-family: inherit; font-size: 13px; outline: none; resize: none; min-height: 38px; line-height: 1.5; }
+.q-input::placeholder { color: var(--dim); }
 .q-delete { background: transparent; border: none; color: var(--dim); cursor: pointer; font-size: 18px; line-height: 1; padding: 2px 0; }
-
-.add-q-btn { width: 100%; background: transparent; border: 1px dashed var(--border); color: var(--dim); padding: 11px; border-radius: var(--r); font-family: inherit; font-size: 13px; cursor: pointer; margin-bottom: 8px; }
 .btn-primary { width: 100%; background: var(--text); color: white; border: none; padding: 12px; border-radius: var(--r); font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer; margin-bottom: 8px; }
 .btn-outline { width: 100%; background: transparent; color: var(--mid); border: 1px solid var(--border); padding: 12px; border-radius: var(--r); font-family: inherit; font-size: 13px; cursor: pointer; margin-bottom: 8px; }
 .btn-danger { width: 100%; background: transparent; color: var(--red); border: 1px solid rgba(176,42,42,0.25); padding: 12px; border-radius: var(--r); font-family: inherit; font-size: 13px; cursor: pointer; margin-bottom: 8px; }
-
 .divider { height: 1px; background: var(--border); margin: 20px 0; }
 .footer-note { text-align: center; font-size: 11px; color: var(--dim); padding: 10px 0 24px; }
 .empty { text-align: center; padding: 40px 20px; color: var(--dim); font-size: 13px; line-height: 1.8; }
+.settings-section-title { font-size: 13px; font-weight: 600; color: var(--mid); margin-bottom: 8px; margin-top: 4px; }
 
+/* NEW DAY MODAL */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.35);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 100; padding: 24px;
+}
+.modal-overlay.hidden { display: none; }
+.modal {
+  background: var(--white); border-radius: 14px;
+  padding: 28px 24px; max-width: 320px; width: 100%;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+  text-align: center;
+}
+.modal-icon { font-size: 36px; margin-bottom: 12px; }
+.modal-title { font-size: 17px; font-weight: 600; margin-bottom: 8px; letter-spacing: -0.3px; }
+.modal-sub { font-size: 13px; color: var(--mid); line-height: 1.5; margin-bottom: 24px; }
+.modal-btn {
+  width: 100%; background: var(--text); color: white; border: none;
+  padding: 13px; border-radius: var(--r);
+  font-family: inherit; font-size: 14px; font-weight: 500; cursor: pointer;
+  margin-bottom: 8px;
+}
+.modal-btn-secondary {
+  width: 100%; background: transparent; color: var(--mid);
+  border: 1px solid var(--border); padding: 13px; border-radius: var(--r);
+  font-family: inherit; font-size: 14px; cursor: pointer;
+}
+
+/* TOAST */
 .toast {
   position: fixed; bottom: 24px; left: 50%;
   transform: translateX(-50%) translateY(10px);
@@ -170,13 +320,33 @@ canvas { width: 100% !important; }
 </head>
 <body>
 <div class="app">
-  <div class="header">
-    <div>
-      <h1>Daily Questions</h1>
-      <p id="headerDate"></p>
+
+  <!-- NEW DAY MODAL -->
+  <div class="modal-overlay hidden" id="newDayModal">
+    <div class="modal">
+      <div class="modal-icon">&#9728;</div>
+      <div class="modal-title">Ready to start a new day?</div>
+      <div class="modal-sub">Yesterday's morning entry will be archived. Your evening data is already saved.</div>
+      <button class="modal-btn" onclick="startNewDay()">Yes, start fresh</button>
+      <button class="modal-btn-secondary" onclick="dismissNewDay()">Not yet, keep yesterday</button>
     </div>
-    <div class="icon-btn" onclick="showPage('settings')">&#9881;</div>
   </div>
+
+  <!-- PROTOCOL SWITCHER -->
+  <div class="proto-bar">
+    <button class="proto-btn active-sun" id="btn-sun" onclick="switchProtocol('sun')">
+      <span class="proto-icon">&#9728;</span> Morning
+    </button>
+    <button class="proto-btn" id="btn-moon" onclick="switchProtocol('moon')">
+      <span class="proto-icon">&#9790;</span> Evening
+    </button>
+  </div>
+
+  <div class="header">
+    <h1 id="protoTitle">Morning Protocol</h1>
+    <p id="headerDate"></p>
+  </div>
+
   <div class="nav">
     <button class="nav-btn active" onclick="showPage('today')">Today</button>
     <button class="nav-btn" onclick="showPage('trends')">Trends</button>
@@ -184,53 +354,136 @@ canvas { width: 100% !important; }
     <button class="nav-btn" onclick="showPage('settings')">Settings</button>
   </div>
 
-  <div class="page active" id="page-today">
-    <div id="questionsContainer"></div>
-    <div class="save-bar">
-      <div class="save-info" id="saveInfo">Sin responder</div>
-      <button class="save-btn" onclick="saveToday()">Guardar</button>
+  <!-- SUN PROTOCOL -->
+  <div class="protocol active" id="proto-sun">
+
+    <div class="page active" id="sun-page-today">
+
+      <!-- PHASE BADGE -->
+      <div id="sun-phase-badge"></div>
+
+      <!-- GRATITUDE -->
+      <div class="section-label">Gratitude</div>
+      <div class="q-card">
+        <div class="q-card-label">5 things you are grateful for</div>
+        <textarea class="text-entry" id="sun-gratitude" placeholder="Write freely..." rows="5"></textarea>
+      </div>
+
+      <!-- PLANS -->
+      <div class="section-label" style="margin-top:6px">Plans for the day</div>
+      <div class="q-card">
+        <div class="q-card-label">Add each task individually</div>
+        <div class="plan-items" id="sun-plan-items"></div>
+        <button class="add-item-btn" id="sun-add-plan-btn" onclick="addPlanItem()">+ Add task</button>
+      </div>
+
+      <!-- WATCH OUT -->
+      <div class="section-label" style="margin-top:6px">Watch out for</div>
+      <div class="q-card">
+        <div class="q-card-label" id="sun-wo-label">Write 2-3 things to be aware of today</div>
+        <div class="freetext-items" id="sun-wo-items"></div>
+        <button class="add-item-btn" id="sun-add-wo-btn" onclick="addWoItem()">+ Add item</button>
+        <div id="sun-wo-scores"></div>
+      </div>
+
+      <!-- STRIVE FOR -->
+      <div class="section-label" style="margin-top:6px">Strive for</div>
+      <div class="q-card">
+        <div class="q-card-label" id="sun-sf-label">Write 2-3 things to aim for today</div>
+        <div class="freetext-items" id="sun-sf-items"></div>
+        <button class="add-item-btn" id="sun-add-sf-btn" onclick="addSfItem()">+ Add item</button>
+        <div id="sun-sf-scores"></div>
+      </div>
+
+      <div class="save-bar">
+        <div class="save-info" id="sun-saveInfo">Not saved</div>
+        <button class="save-btn" onclick="saveSun()">Save</button>
+      </div>
     </div>
+
+    <div class="page" id="sun-page-trends">
+      <div class="range-row">
+        <button class="range-btn active" onclick="setSunRange(7,this)">7 days</button>
+        <button class="range-btn" onclick="setSunRange(14,this)">14 days</button>
+        <button class="range-btn" onclick="setSunRange(30,this)">30 days</button>
+        <button class="range-btn" onclick="setSunRange(0,this)">All</button>
+      </div>
+      <div id="sun-trendsContainer"></div>
+    </div>
+
+    <div class="page" id="sun-page-month">
+      <div class="month-nav">
+        <div class="month-arrow" onclick="changeSunMonth(-1)">&#8249;</div>
+        <div class="month-label" id="sun-monthLabel"></div>
+        <div class="month-arrow" onclick="changeSunMonth(1)">&#8250;</div>
+      </div>
+      <div class="cal-wrap"><div class="cal-grid" id="sun-calGrid"></div></div>
+      <div id="sun-dayDetail"></div>
+    </div>
+
+    <div class="page" id="sun-page-settings">
+      <div class="settings-section-title">Evening questions</div>
+      <div id="moon-questionsEdit-placeholder"></div>
+      <div class="footer-note" style="margin-top:16px">Morning entries reset each new day.<br>Your data is always saved before reset.</div>
+    </div>
+
   </div>
 
-  <div class="page" id="page-trends">
-    <div class="range-row">
-      <button class="range-btn active" onclick="setRange(7,this)">7 days</button>
-      <button class="range-btn" onclick="setRange(14,this)">14 days</button>
-      <button class="range-btn" onclick="setRange(30,this)">30 days</button>
-      <button class="range-btn" onclick="setRange(0,this)">All</button>
+  <!-- MOON PROTOCOL -->
+  <div class="protocol" id="proto-moon">
+
+    <div class="page active" id="moon-page-today">
+      <div id="moon-questionsContainer"></div>
+      <div class="save-bar">
+        <div class="save-info" id="moon-saveInfo">Not answered</div>
+        <button class="save-btn" onclick="saveMoon()">Save</button>
+      </div>
     </div>
-    <div id="trendsContainer"></div>
+
+    <div class="page" id="moon-page-trends">
+      <div class="range-row">
+        <button class="range-btn active" onclick="setMoonRange(7,this)">7 days</button>
+        <button class="range-btn" onclick="setMoonRange(14,this)">14 days</button>
+        <button class="range-btn" onclick="setMoonRange(30,this)">30 days</button>
+        <button class="range-btn" onclick="setMoonRange(0,this)">All</button>
+      </div>
+      <div id="moon-trendsContainer"></div>
+    </div>
+
+    <div class="page" id="moon-page-month">
+      <div class="month-nav">
+        <div class="month-arrow" onclick="changeMoonMonth(-1)">&#8249;</div>
+        <div class="month-label" id="moon-monthLabel"></div>
+        <div class="month-arrow" onclick="changeMoonMonth(1)">&#8250;</div>
+      </div>
+      <div class="cal-wrap"><div class="cal-grid" id="moon-calGrid"></div></div>
+      <div id="moon-dayDetail"></div>
+    </div>
+
+    <div class="page" id="moon-page-settings">
+      <div class="settings-section-title">Evening questions</div>
+      <div id="moon-questionsEdit"></div>
+      <button class="add-item-btn" style="margin-bottom:10px" onclick="addMoonQuestion()">+ Add question</button>
+      <button class="btn-primary" onclick="saveMoonSettings()">Save settings</button>
+      <div class="divider"></div>
+      <div class="section-label">Data</div>
+      <button class="btn-outline" onclick="exportData('sun')">Export morning data (JSON)</button>
+      <button class="btn-outline" onclick="exportData('moon')">Export evening data (JSON)</button>
+      <button class="btn-danger" onclick="confirmClear('sun')">Delete all morning data</button>
+      <button class="btn-danger" onclick="confirmClear('moon')">Delete all evening data</button>
+      <div class="footer-note">Daily Rituals</div>
+    </div>
+
   </div>
 
-  <div class="page" id="page-month">
-    <div class="month-nav">
-      <div class="month-arrow" onclick="changeMonth(-1)">&#8249;</div>
-      <div class="month-label" id="monthLabel"></div>
-      <div class="month-arrow" onclick="changeMonth(1)">&#8250;</div>
-    </div>
-    <div class="cal-wrap">
-      <div class="cal-grid" id="calGrid"></div>
-    </div>
-    <div id="dayDetail"></div>
-  </div>
-
-  <div class="page" id="page-settings">
-    <div class="section-label">My questions</div>
-    <div id="questionsEdit"></div>
-    <button class="add-q-btn" onclick="addQuestion()">+ Add question</button>
-    <button class="btn-primary" onclick="saveSettings()">Save settings</button>
-    <div class="divider"></div>
-    <div class="section-label">Data</div>
-    <button class="btn-outline" onclick="exportData()">Export data (JSON)</button>
-    <button class="btn-danger" onclick="confirmClear()">Delete all data</button>
-    <div class="footer-note">Daily Questions - Marshall Goldsmith</div>
-  </div>
 </div>
 <div class="toast" id="toast"></div>
-
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <script>
-var DEFAULT_QUESTIONS = [
+/* ============================================================
+   DEFAULTS & STATE
+   ============================================================ */
+var DEFAULT_MOON_QUESTIONS = [
   "Did you do your best to set clear goals today?",
   "Did you do your best to make progress toward your goals today?",
   "Did you do your best to find meaning today?",
@@ -240,471 +493,846 @@ var DEFAULT_QUESTIONS = [
 ];
 
 var state = {
-  questions: DEFAULT_QUESTIONS.slice(),
-  entries: {},
-  currentMonth: new Date()
+  currentProto: 'sun',
+  currentPage: 'today',
+  sun: {
+    draft: null,
+    entries: {},
+    currentMonth: new Date(),
+    currentRange: 7,
+    selectedDay: null,
+    charts: {}
+  },
+  moon: {
+    questions: DEFAULT_MOON_QUESTIONS.slice(),
+    entries: {},
+    currentMonth: new Date(),
+    currentRange: 7,
+    selectedDay: null,
+    charts: {}
+  },
+  lastSeenDate: null,
+  newDayDismissedFor: null
 };
 
-var currentRange = 7;
-var chartInstances = {};
-var selectedDayKey = null;
-var todayValues = [];
+var moonValues = [];
 
+/* ============================================================
+   STORAGE
+   ============================================================ */
 function loadState() {
   try {
-    var q = localStorage.getItem('dq-questions');
-    if (q) state.questions = JSON.parse(q);
-    var e = localStorage.getItem('dq-entries');
-    if (e) state.entries = JSON.parse(e);
-  } catch(err) {}
+    var raw = localStorage.getItem('dr-v2');
+    if (!raw) return;
+    var p = JSON.parse(raw);
+    if (p.sun) {
+      if (p.sun.draft !== undefined) state.sun.draft = p.sun.draft;
+      if (p.sun.entries) state.sun.entries = p.sun.entries;
+    }
+    if (p.moon) {
+      if (p.moon.questions) state.moon.questions = p.moon.questions;
+      if (p.moon.entries)   state.moon.entries   = p.moon.entries;
+    }
+    if (p.lastSeenDate) state.lastSeenDate = p.lastSeenDate;
+    if (p.newDayDismissedFor) state.newDayDismissedFor = p.newDayDismissedFor;
+  } catch(e) {}
 }
 
 function persist() {
   try {
-    localStorage.setItem('dq-questions', JSON.stringify(state.questions));
-    localStorage.setItem('dq-entries', JSON.stringify(state.entries));
-  } catch(err) {}
+    localStorage.setItem('dr-v2', JSON.stringify({
+      sun: { draft: state.sun.draft, entries: state.sun.entries },
+      moon: { questions: state.moon.questions, entries: state.moon.entries },
+      lastSeenDate: state.lastSeenDate,
+      newDayDismissedFor: state.newDayDismissedFor
+    }));
+  } catch(e) {}
 }
 
-function todayKey() {
-  return fmtKey(new Date());
-}
-
-function fmtKey(d) {
-  var y = d.getFullYear();
-  var m = String(d.getMonth() + 1).padStart('0', 2);
-  var day = String(d.getDate()).padStart('0', 2);
-  return y + '-' + m + '-' + day;
-}
-
-function padStr(str, ch, len) {
-  while (str.length < len) str = ch + str;
-  return str;
-}
-
-function fmtKey2(d) {
-  var y = d.getFullYear();
-  var m = padStr(String(d.getMonth() + 1), '0', 2);
-  var day = padStr(String(d.getDate()), '0', 2);
-  return y + '-' + m + '-' + day;
-}
-
+/* ============================================================
+   UTILS
+   ============================================================ */
+function todayKey() { return fmtKey(new Date()); }
+function fmtKey(d) { return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()); }
+function pad(n) { return n < 10 ? '0' + String(n) : String(n); }
 function calcAvg(arr) {
-  var valid = arr.filter(function(x) { return x !== null && x !== undefined; });
-  if (!valid.length) return null;
-  return valid.reduce(function(a, b) { return a + b; }, 0) / valid.length;
+  var v = arr.filter(function(x){ return x !== null && x !== undefined; });
+  if (!v.length) return null;
+  return v.reduce(function(a,b){ return a+b; },0) / v.length;
 }
-
 function scoreColor(v) {
   if (v >= 8) return { text: '#2d7a4f', bg: '#edf7f2' };
   if (v >= 5) return { text: '#a05c00', bg: '#fdf3e3' };
   return { text: '#b02a2a', bg: '#fdf0f0' };
 }
-
-function selClass(n) {
-  return 'selected';
-}
-
 function showToast(msg) {
   var t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(function() { t.classList.remove('show'); }, 2000);
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(function(){ t.classList.remove('show'); }, 2000);
 }
-
 function renderDate() {
   var d = new Date();
   var DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
   var MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
   document.getElementById('headerDate').textContent = DAYS[d.getDay()] + ', ' + MONTHS[d.getMonth()] + ' ' + d.getDate();
 }
+function getKeys(entries, range) {
+  var all = Object.keys(entries).sort();
+  if (range === 0) return all;
+  var cutoff = new Date(); cutoff.setDate(cutoff.getDate() - range);
+  var cs = fmtKey(cutoff);
+  return all.filter(function(k){ return k >= cs; });
+}
+
+/* ============================================================
+   NEW DAY LOGIC
+   ============================================================ */
+function checkNewDay() {
+  var today = todayKey();
+  // Already dismissed for today
+  if (state.newDayDismissedFor === today) return;
+  // No previous session
+  if (!state.lastSeenDate) { state.lastSeenDate = today; persist(); return; }
+  // Same day as last session
+  if (state.lastSeenDate === today) return;
+  // It's a new day after midnight — show prompt
+  // But only if there's actually a draft to clear OR a previous day entry
+  if (state.sun.draft || state.sun.entries[state.lastSeenDate]) {
+    document.getElementById('newDayModal').classList.remove('hidden');
+  } else {
+    state.lastSeenDate = today; persist();
+  }
+}
+
+function startNewDay() {
+  var today = todayKey();
+  state.sun.draft = null;
+  state.lastSeenDate = today;
+  state.newDayDismissedFor = null;
+  persist();
+  document.getElementById('newDayModal').classList.add('hidden');
+  renderSunToday();
+  showToast('Fresh start. Good morning!');
+}
+
+function dismissNewDay() {
+  var today = todayKey();
+  state.newDayDismissedFor = today;
+  persist();
+  document.getElementById('newDayModal').classList.add('hidden');
+}
+
+/* ============================================================
+   PROTOCOL / NAV
+   ============================================================ */
+function switchProtocol(proto) {
+  state.currentProto = proto;
+  document.getElementById('proto-sun').classList.toggle('active', proto === 'sun');
+  document.getElementById('proto-moon').classList.toggle('active', proto === 'moon');
+  document.getElementById('btn-sun').className  = 'proto-btn' + (proto === 'sun'  ? ' active-sun'  : '');
+  document.getElementById('btn-moon').className = 'proto-btn' + (proto === 'moon' ? ' active-moon' : '');
+  document.getElementById('protoTitle').textContent = proto === 'sun' ? 'Morning Protocol' : 'Evening Protocol';
+  showPage('today');
+}
 
 function showPage(name) {
-  var pages = document.querySelectorAll('.page');
+  state.currentPage = name;
+  var navBtns = document.querySelectorAll('.nav-btn');
+  var navNames = ['today','trends','month','settings'];
+  for (var i = 0; i < navBtns.length; i++) navBtns[i].classList.remove('active');
+  var idx = navNames.indexOf(name);
+  if (idx >= 0) navBtns[idx].classList.add('active');
+
+  var proto = state.currentProto;
+  var pages = document.querySelectorAll('#proto-' + proto + ' .page');
   for (var i = 0; i < pages.length; i++) pages[i].classList.remove('active');
-  var btns = document.querySelectorAll('.nav-btn');
-  for (var i = 0; i < btns.length; i++) btns[i].classList.remove('active');
-  document.getElementById('page-' + name).classList.add('active');
-  var idx = ['today','trends','month','settings'].indexOf(name);
-  if (idx >= 0) btns[idx].classList.add('active');
-  if (name === 'trends') renderTrends();
-  if (name === 'month') renderMonth();
-  if (name === 'settings') renderSettings();
-}
+  var target = document.getElementById(proto + '-page-' + name);
+  if (target) target.classList.add('active');
 
-function renderToday() {
-  var key = todayKey();
-  var saved = state.entries[key];
-  todayValues = saved ? saved.slice() : state.questions.map(function() { return null; });
-  while (todayValues.length < state.questions.length) todayValues.push(null);
-  todayValues = todayValues.slice(0, state.questions.length);
-
-  var container = document.getElementById('questionsContainer');
-  container.innerHTML = '';
-
-  for (var i = 0; i < state.questions.length; i++) {
-    (function(qi) {
-      var card = document.createElement('div');
-      card.className = 'q-card';
-
-      var text = document.createElement('div');
-      text.className = 'q-card-text';
-      text.textContent = state.questions[qi];
-      card.appendChild(text);
-
-      var grid = document.createElement('div');
-      grid.className = 'num-grid';
-      grid.id = 'ng-' + qi;
-
-      for (var n = 1; n <= 10; n++) {
-        (function(num) {
-          var btn = document.createElement('button');
-          btn.className = 'num-btn' + (todayValues[qi] === num ? ' ' + selClass(num) : '');
-          btn.textContent = String(num);
-          btn.onclick = function() { selectNum(qi, num); };
-          grid.appendChild(btn);
-        })(n);
-      }
-
-      card.appendChild(grid);
-      container.appendChild(card);
-    })(i);
-  }
-
-  updateSaveBar(!!saved);
-}
-
-function selectNum(qi, n) {
-  todayValues[qi] = n;
-  var grid = document.getElementById('ng-' + qi);
-  var btns = grid.querySelectorAll('.num-btn');
-  for (var i = 0; i < btns.length; i++) {
-    var v = i + 1;
-    btns[i].className = v === n ? 'num-btn ' + selClass(n) : 'num-btn';
-  }
-  updateSaveBar(false);
-}
-
-function updateSaveBar(isSaved) {
-  var info = document.getElementById('saveInfo');
-  var filled = todayValues.filter(function(v) { return v !== null; }).length;
-  if (isSaved) {
-    info.className = 'save-info saved';
-    info.textContent = 'Saved (' + filled + '/' + state.questions.length + ')';
+  if (proto === 'sun') {
+    if (name === 'trends')   renderSunTrends();
+    if (name === 'month')    renderSunMonth();
   } else {
-    info.className = 'save-info';
-    info.textContent = filled === 0 ? 'Not answered' : filled + ' / ' + state.questions.length + ' answered';
+    if (name === 'trends')   renderMoonTrends();
+    if (name === 'month')    renderMoonMonth();
+    if (name === 'settings') renderMoonSettings();
   }
 }
 
-function saveToday() {
-  if (todayValues.filter(function(v) { return v !== null; }).length === 0) {
-    showToast('Answer at least one question');
-    return;
+/* ============================================================
+   SUN DRAFT HELPERS
+   The draft stores: { gratitude, plans:[{text,done}], watchout:[{text,score}], strive:[{text,score}], phase }
+   phase: 'write' = morning fill-in, 'rate' = evening rating unlocked
+   ============================================================ */
+function getOrCreateDraft() {
+  if (!state.sun.draft) {
+    state.sun.draft = {
+      gratitude: '',
+      plans: [],
+      watchout: [{ text: '', score: null }, { text: '', score: null }],
+      strive:   [{ text: '', score: null }, { text: '', score: null }],
+      phase: 'write'
+    };
   }
-  state.entries[todayKey()] = todayValues.slice();
-  persist();
-  updateSaveBar(true);
-  showToast('Saved');
+  return state.sun.draft;
 }
 
-function setRange(n, btn) {
-  currentRange = n;
-  var btns = document.querySelectorAll('.range-btn');
-  for (var i = 0; i < btns.length; i++) btns[i].classList.remove('active');
-  btn.classList.add('active');
-  renderTrends();
+function isRatingPhase() {
+  var d = state.sun.draft;
+  return d && d.phase === 'rate';
 }
 
-function getKeys() {
-  var all = Object.keys(state.entries).sort();
-  if (currentRange === 0) return all;
-  var cutoff = new Date();
-  cutoff.setDate(cutoff.getDate() - currentRange);
-  var cutoffStr = fmtKey2(cutoff);
-  return all.filter(function(k) { return k >= cutoffStr; });
-}
+/* ============================================================
+   SUN — TODAY RENDER
+   ============================================================ */
+function renderSunToday() {
+  var draft = getOrCreateDraft();
+  var rating = isRatingPhase();
 
-function renderTrends() {
-  var ids = Object.keys(chartInstances);
-  for (var i = 0; i < ids.length; i++) {
-    try { chartInstances[ids[i]].destroy(); } catch(e) {}
-  }
-  chartInstances = {};
-
-  var keys = getKeys();
-  var container = document.getElementById('trendsContainer');
-  container.innerHTML = '';
-
-  if (keys.length === 0) {
-    container.innerHTML = '<div class="empty">No data in this period.<br>Start by answering today\'s questions.</div>';
-    return;
-  }
-
-  for (var qi = 0; qi < state.questions.length; qi++) {
-    (function(qidx) {
-      var vals = keys.map(function(k) {
-        var e = state.entries[k];
-        return (e && e[qidx] != null) ? e[qidx] : null;
-      });
-      var valid = vals.filter(function(v) { return v !== null; });
-      if (!valid.length) return;
-
-      var a = calcAvg(valid);
-      var col = scoreColor(a);
-      var best = Math.max.apply(null, valid);
-      var worst = Math.min.apply(null, valid);
-
-      var h = Math.max(1, Math.floor(valid.length / 2));
-      var trendVal = calcAvg(valid.slice(valid.length - h)) - calcAvg(valid.slice(0, h));
-      var trendStr = (trendVal >= 0 ? '+' : '') + trendVal.toFixed(1);
-      var trendColor = trendVal >= 0 ? '#2d7a4f' : '#b02a2a';
-
-      var cid = 'chart-q' + qidx;
-
-      var card = document.createElement('div');
-      card.className = 'trend-card';
-      card.innerHTML =
-        '<div class="trend-header">' +
-          '<div class="trend-q">' + state.questions[qidx] + '</div>' +
-          '<div class="trend-avg" style="color:' + col.text + '">' + a.toFixed(1) + '</div>' +
-        '</div>' +
-        '<div class="trend-meta">' +
-          '<div class="trend-meta-item">Best <strong>' + best + '</strong></div>' +
-          '<div class="trend-meta-item">Worst <strong>' + worst + '</strong></div>' +
-          '<div class="trend-meta-item">Trend <strong style="color:' + trendColor + '">' + trendStr + '</strong></div>' +
-          '<div class="trend-meta-item">Days <strong>' + valid.length + '</strong></div>' +
-        '</div>' +
-        '<canvas id="' + cid + '" height="90"></canvas>';
-
-      container.appendChild(card);
-
-      setTimeout(function() {
-        var ctx = document.getElementById(cid);
-        if (!ctx) return;
-        var labels = keys.map(function(k) {
-          var d = new Date(k + 'T12:00:00');
-          return (d.getDate()) + '/' + (d.getMonth() + 1);
-        });
-        chartInstances[cid] = new Chart(ctx, {
-          type: 'line',
-          data: { labels: labels, datasets: [{
-            data: vals,
-            borderColor: col.text,
-            backgroundColor: col.bg,
-            borderWidth: 2, fill: true, tension: 0.35,
-            pointRadius: keys.length > 20 ? 0 : 3,
-            pointBackgroundColor: col.text,
-            spanGaps: true
-          }]},
-          options: {
-            responsive: true,
-            plugins: { legend: { display: false }, tooltip: {
-              backgroundColor: '#fff', borderColor: '#e0deda', borderWidth: 1,
-              titleColor: '#6b6b6b', bodyColor: '#1a1a1a',
-              callbacks: { label: function(c) { return ' ' + c.raw + ' / 10'; } }
-            }},
-            scales: {
-              y: { min: 0, max: 10, grid: { color: '#f0efe9' },
-                ticks: { color: '#aaa', font: { size: 10 }, stepSize: 2 } },
-              x: { grid: { display: false },
-                ticks: { color: '#aaa', font: { size: 10 }, maxTicksLimit: 7 } }
-            }
-          }
-        });
-      }, 0);
-    })(qi);
-  }
-}
-
-function changeMonth(dir) {
-  state.currentMonth = new Date(state.currentMonth.getFullYear(), state.currentMonth.getMonth() + dir, 1);
-  selectedDayKey = null;
-  renderMonth();
-}
-
-function renderMonth() {
-  var now = state.currentMonth;
-  var MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-  document.getElementById('monthLabel').textContent = MONTHS[now.getMonth()] + ' ' + now.getFullYear();
-
-  var grid = document.getElementById('calGrid');
-  grid.innerHTML = '';
-
-  var heads = ['Mo','Tu','We','Th','Fr','Sa','Su'];
-  for (var i = 0; i < heads.length; i++) {
-    var h = document.createElement('div');
-    h.className = 'cal-head';
-    h.textContent = heads[i];
-    grid.appendChild(h);
-  }
-
-  var firstDow = new Date(now.getFullYear(), now.getMonth(), 1).getDay();
-  var start = firstDow === 0 ? 6 : firstDow - 1;
-  for (var i = 0; i < start; i++) {
-    var e = document.createElement('div');
-    e.className = 'cal-day empty';
-    e.innerHTML = '<div class="cal-num"></div>';
-    grid.appendChild(e);
-  }
-
-  var daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-  var todayStr = todayKey();
-
-  for (var d = 1; d <= daysInMonth; d++) {
-    (function(day) {
-      var key = now.getFullYear() + '-' + padStr(String(now.getMonth() + 1), '0', 2) + '-' + padStr(String(day), '0', 2);
-      var entry = state.entries[key];
-      var valid = entry ? entry.filter(function(v) { return v != null; }) : [];
-      var a = valid.length ? calcAvg(valid) : null;
-      var col = a !== null ? scoreColor(a) : null;
-      var isToday = key === todayStr;
-      var isSel = key === selectedDayKey;
-
-      var cell = document.createElement('div');
-      var cls = 'cal-day';
-      if (entry) cls += ' has-data';
-      if (isToday) cls += ' today';
-      if (isSel) cls += ' sel-day';
-      cell.className = cls;
-
-      var numDiv = document.createElement('div');
-      numDiv.className = 'cal-num';
-      numDiv.textContent = String(day);
-      cell.appendChild(numDiv);
-
-      if (col) {
-        var dot = document.createElement('div');
-        dot.className = 'cal-dot';
-        dot.style.background = col.text;
-        cell.appendChild(dot);
-      }
-
-      if (entry) {
-        cell.onclick = function() {
-          selectedDayKey = key;
-          renderMonth();
-        };
-      }
-
-      grid.appendChild(cell);
-    })(d);
-  }
-
-  if (selectedDayKey && state.entries[selectedDayKey]) {
-    renderDayDetail(selectedDayKey);
+  // Phase badge
+  var badge = document.getElementById('sun-phase-badge');
+  if (rating) {
+    badge.innerHTML = '<div class="phase-badge phase-rate">&#9790; Evening — rate your day</div>';
   } else {
-    document.getElementById('dayDetail').innerHTML = '';
-  }
-}
-
-function renderDayDetail(key) {
-  var entry = state.entries[key];
-  var d = new Date(key + 'T12:00:00');
-  var DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-  var MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-
-  var rows = '';
-  for (var i = 0; i < state.questions.length; i++) {
-    var v = (entry[i] != null) ? entry[i] : null;
-    if (v !== null) {
-      var col = scoreColor(v);
-      rows += '<div class="detail-row">' +
-        '<div class="detail-q">' + state.questions[i] + '</div>' +
-        '<div class="detail-chip" style="color:' + col.text + ';background:' + col.bg + '">' + v + '</div>' +
-        '</div>';
-    }
+    badge.innerHTML = '<div class="phase-badge phase-write">&#9728; Morning — plan your day</div>';
   }
 
-  document.getElementById('dayDetail').innerHTML =
-    '<div class="day-detail">' +
-      '<div class="day-detail-title">' + DAYS[d.getDay()] + ', ' + MONTHS[d.getMonth()] + ' ' + d.getDate() + '</div>' +
-      (rows || '<div style="color:#aaa;font-size:12px">No answers recorded</div>') +
-    '</div>';
+  // Gratitude
+  var gEl = document.getElementById('sun-gratitude');
+  gEl.value = draft.gratitude || '';
+  gEl.disabled = rating;
+  gEl.style.color = rating ? 'var(--dim)' : '';
+
+  // Plans
+  renderPlanItems(rating);
+
+  // Watch out
+  renderFreetextSection('wo', draft.watchout, rating);
+
+  // Strive for
+  renderFreetextSection('sf', draft.strive, rating);
+
+  updateSunSaveBar();
 }
 
-function renderSettings() {
-  var c = document.getElementById('questionsEdit');
-  c.innerHTML = '';
-  for (var i = 0; i < state.questions.length; i++) {
+function renderPlanItems(locked) {
+  var draft = getOrCreateDraft();
+  var container = document.getElementById('sun-plan-items');
+  container.innerHTML = '';
+  var addBtn = document.getElementById('sun-add-plan-btn');
+  addBtn.style.display = locked ? 'none' : 'block';
+
+  draft.plans.forEach(function(item, i) {
     (function(idx) {
-      var card = document.createElement('div');
-      card.className = 'q-edit-card';
+      var row = document.createElement('div');
+      row.className = 'plan-item' + (item.done ? ' done' : '');
+
+      var chk = document.createElement('div');
+      chk.className = 'plan-checkbox' + (item.done ? ' checked' : '');
+      chk.textContent = item.done ? '\u2713' : '';
+      chk.onclick = function() { togglePlan(idx); };
+
+      var ta = document.createElement('textarea');
+      ta.className = 'plan-item-text';
+      ta.value = item.text;
+      ta.placeholder = 'Task...';
+      ta.rows = 1;
+      ta.disabled = locked;
+      ta.oninput = function() {
+        draft.plans[idx].text = this.value;
+        autoResize(this);
+      };
+      setTimeout(function(){ autoResize(ta); }, 0);
+
+      row.appendChild(chk);
+      row.appendChild(ta);
+
+      if (!locked) {
+        var del = document.createElement('button');
+        del.className = 'plan-item-del';
+        del.textContent = '\u00d7';
+        del.onclick = function() { deletePlanItem(idx); };
+        row.appendChild(del);
+      }
+      container.appendChild(row);
+    })(i);
+  });
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = el.scrollHeight + 'px';
+}
+
+function addPlanItem() {
+  var draft = getOrCreateDraft();
+  draft.plans.push({ text: '', done: false });
+  renderPlanItems(false);
+  var items = document.querySelectorAll('.plan-item-text');
+  if (items.length) {
+    var last = items[items.length - 1];
+    last.focus();
+  }
+}
+
+function deletePlanItem(idx) {
+  var draft = getOrCreateDraft();
+  draft.plans.splice(idx, 1);
+  renderPlanItems(false);
+}
+
+function togglePlan(idx) {
+  var draft = getOrCreateDraft();
+  draft.plans[idx].done = !draft.plans[idx].done;
+  persist();
+  renderPlanItems(isRatingPhase());
+}
+
+function renderFreetextSection(type, items, locked) {
+  var containerId = 'sun-' + type + '-items';
+  var addBtnId = 'sun-add-' + type + '-btn';
+  var scoresId = 'sun-' + type + '-scores';
+  var labelId  = 'sun-' + type + '-label';
+
+  var container = document.getElementById(containerId);
+  container.innerHTML = '';
+  var addBtn = document.getElementById(addBtnId);
+  addBtn.style.display = locked ? 'none' : 'block';
+
+  var label = document.getElementById(labelId);
+  if (locked) {
+    label.textContent = type === 'wo' ? 'How well did you manage each?' : 'How well did you achieve each?';
+  } else {
+    label.textContent = type === 'wo' ? 'Write 2-3 things to be aware of today' : 'Write 2-3 things to aim for today';
+  }
+
+  items.forEach(function(item, i) {
+    (function(idx) {
+      var row = document.createElement('div');
+      row.className = 'freetext-item';
 
       var num = document.createElement('div');
-      num.className = 'q-num';
+      num.className = 'freetext-num';
       num.textContent = String(idx + 1);
 
       var ta = document.createElement('textarea');
-      ta.className = 'q-input';
-      ta.id = 'qedit-' + idx;
-      ta.rows = 2;
-      ta.value = state.questions[idx];
+      ta.className = 'freetext-item-text';
+      ta.value = item.text;
+      ta.placeholder = type === 'wo' ? 'Something to watch out for...' : 'Something to strive for...';
+      ta.rows = 1;
+      ta.disabled = locked;
+      ta.oninput = function() {
+        items[idx].text = this.value;
+        autoResize(this);
+      };
+      setTimeout(function(){ autoResize(ta); }, 0);
 
-      var del = document.createElement('button');
-      del.className = 'q-delete';
-      del.textContent = 'x';
-      del.onclick = function() { deleteQuestion(idx); };
+      row.appendChild(num);
+      row.appendChild(ta);
 
-      card.appendChild(num);
-      card.appendChild(ta);
-      card.appendChild(del);
-      c.appendChild(card);
+      if (!locked) {
+        var del = document.createElement('button');
+        del.className = 'freetext-item-del';
+        del.textContent = '\u00d7';
+        del.onclick = function() { deleteFreetextItem(type, idx); };
+        row.appendChild(del);
+      }
+      container.appendChild(row);
     })(i);
+  });
+
+  // Scores (only visible in rating phase)
+  var scoresDiv = document.getElementById(scoresId);
+  scoresDiv.innerHTML = '';
+  if (locked) {
+    items.forEach(function(item, i) {
+      if (!item.text.trim()) return;
+      (function(idx) {
+        var wrap = document.createElement('div');
+        wrap.style.cssText = 'margin-top:10px;padding-top:10px;border-top:1px solid var(--border);';
+
+        var lbl = document.createElement('div');
+        lbl.style.cssText = 'font-size:12px;color:var(--mid);margin-bottom:6px;';
+        lbl.textContent = item.text;
+        wrap.appendChild(lbl);
+
+        var grid = document.createElement('div');
+        grid.className = 'num-grid-sm';
+        grid.id = 'sun-score-' + type + '-' + idx;
+        wrap.appendChild(grid);
+        scoresDiv.appendChild(wrap);
+        buildSmallScoreGrid('sun-score-' + type + '-' + idx, item.score, type, idx);
+      })(i);
+    });
   }
 }
 
-function addQuestion() {
-  state.questions.push('');
-  renderSettings();
+function buildSmallScoreGrid(gridId, currentVal, type, idx) {
+  var grid = document.getElementById(gridId);
+  if (!grid) return;
+  grid.innerHTML = '';
+  for (var n = 1; n <= 10; n++) {
+    (function(num) {
+      var btn = document.createElement('button');
+      btn.className = 'num-btn-sm' + (currentVal === num ? ' selected' : '');
+      btn.textContent = String(num);
+      btn.onclick = (function(t, i, v){ return function(){ selectSunScore(t, i, v); }; })(type, idx, num);
+      grid.appendChild(btn);
+    })(n);
+  }
+}
+
+function selectSunScore(type, idx, n) {
+  var draft = getOrCreateDraft();
+  var arr = type === 'wo' ? draft.watchout : draft.strive;
+  arr[idx].score = n;
+  buildSmallScoreGrid('sun-score-' + type + '-' + idx, n, type, idx);
+  updateSunSaveBar();
+}
+
+function addWoItem() {
+  var draft = getOrCreateDraft();
+  draft.watchout.push({ text: '', score: null });
+  renderFreetextSection('wo', draft.watchout, false);
+}
+function addSfItem() {
+  var draft = getOrCreateDraft();
+  draft.strive.push({ text: '', score: null });
+  renderFreetextSection('sf', draft.strive, false);
+}
+function deleteFreetextItem(type, idx) {
+  var draft = getOrCreateDraft();
+  if (type === 'wo') draft.watchout.splice(idx, 1);
+  else draft.strive.splice(idx, 1);
+  renderFreetextSection(type, type === 'wo' ? draft.watchout : draft.strive, false);
+}
+
+function updateSunSaveBar() {
+  var info = document.getElementById('sun-saveInfo');
+  var key = todayKey();
+  if (state.sun.entries[key]) {
+    info.className = 'save-info saved'; info.textContent = 'Saved today';
+  } else {
+    info.className = 'save-info'; info.textContent = 'Not saved';
+  }
+}
+
+function saveSun() {
+  var draft = getOrCreateDraft();
+  draft.gratitude = document.getElementById('sun-gratitude').value;
+
+  var planTas = document.querySelectorAll('.plan-item-text');
+  planTas.forEach(function(ta, i) {
+    if (draft.plans[i] !== undefined) draft.plans[i].text = ta.value;
+  });
+
+  if (!isRatingPhase()) {
+    // First save: read text, lock fields, show rating UI immediately
+    var woTas = document.querySelectorAll('#sun-wo-items .freetext-item-text');
+    woTas.forEach(function(ta, i) { if (draft.watchout[i]) draft.watchout[i].text = ta.value; });
+    var sfTas = document.querySelectorAll('#sun-sf-items .freetext-item-text');
+    sfTas.forEach(function(ta, i) { if (draft.strive[i]) draft.strive[i].text = ta.value; });
+
+    draft.phase = 'rate';
+    state.sun.draft = draft;
+    persist();
+    renderSunToday();
+    showToast('Saved. You can now rate your day.');
+    return;
+  }
+
+  // Subsequent saves in rating phase — archive to entries
+  var key = todayKey();
+  state.sun.entries[key] = JSON.parse(JSON.stringify(draft));
+  state.sun.draft = draft;
+  persist();
+  updateSunSaveBar();
+  showToast('Saved');
+}
+
+/* ============================================================
+   SUN — TRENDS
+   ============================================================ */
+function setSunRange(n, btn) {
+  state.sun.currentRange = n;
+  var btns = document.querySelectorAll('#sun-page-trends .range-btn');
+  for (var i = 0; i < btns.length; i++) btns[i].classList.remove('active');
+  btn.classList.add('active');
+  renderSunTrends();
+}
+
+function renderSunTrends() {
+  var ids = Object.keys(state.sun.charts);
+  for (var i = 0; i < ids.length; i++) { try { state.sun.charts[ids[i]].destroy(); } catch(e) {} }
+  state.sun.charts = {};
+
+  var keys = getKeys(state.sun.entries, state.sun.currentRange);
+  var container = document.getElementById('sun-trendsContainer');
+  container.innerHTML = '';
+
+  if (!keys.length) {
+    container.innerHTML = '<div class="empty">No data yet.<br>Complete a full day to see trends.</div>';
+    return;
+  }
+
+  var labels = keys.map(function(k){ var d = new Date(k+'T12:00:00'); return (d.getMonth()+1) + '/' + d.getDate(); });
+
+  function addChart(title, vals, cid) {
+    var valid = vals.filter(function(v){ return v !== null; });
+    if (!valid.length) return;
+    var a = calcAvg(valid);
+    var col = scoreColor(a);
+    var best = Math.max.apply(null, valid);
+    var worst = Math.min.apply(null, valid);
+    var h = Math.max(1, Math.floor(valid.length/2));
+    var tr = calcAvg(valid.slice(valid.length-h)) - calcAvg(valid.slice(0,h));
+    var trStr = (tr >= 0 ? '+' : '') + tr.toFixed(1);
+    var trCol = tr >= 0 ? '#2d7a4f' : '#b02a2a';
+
+    var card = document.createElement('div');
+    card.className = 'trend-card';
+    card.innerHTML =
+      '<div class="trend-header"><div class="trend-q">' + title + '</div>' +
+      '<div class="trend-avg" style="color:' + col.text + '">' + a.toFixed(1) + '</div></div>' +
+      '<div class="trend-meta">' +
+      '<div class="trend-meta-item">Best <strong>' + best + '</strong></div>' +
+      '<div class="trend-meta-item">Worst <strong>' + worst + '</strong></div>' +
+      '<div class="trend-meta-item">Trend <strong style="color:' + trCol + '">' + trStr + '</strong></div>' +
+      '<div class="trend-meta-item">Days <strong>' + valid.length + '</strong></div></div>' +
+      '<canvas id="' + cid + '" height="90"></canvas>';
+    container.appendChild(card);
+
+    setTimeout(function() {
+      var ctx = document.getElementById(cid); if (!ctx) return;
+      state.sun.charts[cid] = new Chart(ctx, {
+        type: 'line',
+        data: { labels: labels, datasets: [{ data: vals, borderColor: col.text, backgroundColor: col.bg, borderWidth: 2, fill: true, tension: 0.35, pointRadius: keys.length > 20 ? 0 : 3, pointBackgroundColor: col.text, spanGaps: true }]},
+        options: { responsive: true, plugins: { legend: { display: false }, tooltip: { backgroundColor:'#fff', borderColor:'#e0deda', borderWidth:1, titleColor:'#6b6b6b', bodyColor:'#1a1a1a', callbacks:{ label: function(c){ return ' '+c.raw+' / 10'; } } } },
+          scales: { y:{ min:0, max:10, grid:{ color:'#f0efe9' }, ticks:{ color:'#aaa', font:{ size:10 }, stepSize:2 } }, x:{ grid:{ display:false }, ticks:{ color:'#aaa', font:{ size:10 }, maxTicksLimit:7 } } } }
+      });
+    }, 0);
+  }
+
+  // Collect unique watchout/strive labels across all entries
+  var woLabels = {}, sfLabels = {};
+  keys.forEach(function(k) {
+    var e = state.sun.entries[k];
+    if (e && e.watchout) e.watchout.forEach(function(w){ if (w.text.trim()) woLabels[w.text.trim()] = true; });
+    if (e && e.strive)   e.strive.forEach(function(s){   if (s.text.trim()) sfLabels[s.text.trim()] = true; });
+  });
+
+  Object.keys(woLabels).forEach(function(label, li) {
+    var vals = keys.map(function(k) {
+      var e = state.sun.entries[k]; if (!e || !e.watchout) return null;
+      for (var i = 0; i < e.watchout.length; i++) {
+        if (e.watchout[i].text.trim() === label && e.watchout[i].score != null) return e.watchout[i].score;
+      }
+      return null;
+    });
+    addChart('Watch out: ' + label, vals, 'sun-cwo-' + li);
+  });
+
+  Object.keys(sfLabels).forEach(function(label, li) {
+    var vals = keys.map(function(k) {
+      var e = state.sun.entries[k]; if (!e || !e.strive) return null;
+      for (var i = 0; i < e.strive.length; i++) {
+        if (e.strive[i].text.trim() === label && e.strive[i].score != null) return e.strive[i].score;
+      }
+      return null;
+    });
+    addChart('Strive for: ' + label, vals, 'sun-csf-' + li);
+  });
+
+  // Plans completion rate
+  var completionVals = keys.map(function(k) {
+    var e = state.sun.entries[k];
+    if (!e || !e.plans || !e.plans.length) return null;
+    var done = e.plans.filter(function(p){ return p.done; }).length;
+    return Math.round((done / e.plans.length) * 10);
+  });
+  addChart('Plans completion (0-10 scale)', completionVals, 'sun-cplans');
+}
+
+/* ============================================================
+   SUN — MONTH
+   ============================================================ */
+function changeSunMonth(dir) {
+  state.sun.currentMonth = new Date(state.sun.currentMonth.getFullYear(), state.sun.currentMonth.getMonth() + dir, 1);
+  state.sun.selectedDay = null; renderSunMonth();
+}
+
+function renderSunMonth() {
+  renderCalendar(
+    state.sun.currentMonth, state.sun.entries, state.sun.selectedDay,
+    function(key){ state.sun.selectedDay = key; renderSunMonth(); },
+    function(entry) {
+      var rows = '';
+      if (entry.gratitude) {
+        rows += '<div class="detail-row"><div class="detail-q">Gratitude</div><div class="detail-val">' + entry.gratitude + '</div></div>';
+      }
+      if (entry.plans && entry.plans.length) {
+        var listHtml = '<div class="detail-check-list">';
+        entry.plans.forEach(function(p) {
+          var cls = p.done ? 'done-item' : 'undone-item';
+          var icon = p.done ? '\u2713 ' : '\u25cb ';
+          listHtml += '<div class="detail-check-item ' + cls + '">' + icon + p.text + '</div>';
+        });
+        listHtml += '</div>';
+        rows += '<div class="detail-row"><div class="detail-q">Plans</div><div class="detail-val">' + listHtml + '</div></div>';
+      }
+      if (entry.watchout) {
+        entry.watchout.forEach(function(w) {
+          if (!w.text.trim()) return;
+          var scoreHtml = '';
+          if (w.score != null) {
+            var col = scoreColor(w.score);
+            scoreHtml = ' <span class="detail-chip" style="color:' + col.text + ';background:' + col.bg + '">' + w.score + '</span>';
+          }
+          rows += '<div class="detail-row"><div class="detail-q">Watch: ' + w.text + '</div><div class="detail-val">' + scoreHtml + '</div></div>';
+        });
+      }
+      if (entry.strive) {
+        entry.strive.forEach(function(s) {
+          if (!s.text.trim()) return;
+          var scoreHtml = '';
+          if (s.score != null) {
+            var col = scoreColor(s.score);
+            scoreHtml = ' <span class="detail-chip" style="color:' + col.text + ';background:' + col.bg + '">' + s.score + '</span>';
+          }
+          rows += '<div class="detail-row"><div class="detail-q">Strive: ' + s.text + '</div><div class="detail-val">' + scoreHtml + '</div></div>';
+        });
+      }
+      return rows;
+    },
+    'sun-calGrid', 'sun-monthLabel', 'sun-dayDetail'
+  );
+}
+
+/* ============================================================
+   MOON — TODAY
+   ============================================================ */
+function renderMoonToday() {
+  var key = todayKey();
+  var saved = state.moon.entries[key];
+  moonValues = saved ? saved.slice() : state.moon.questions.map(function(){ return null; });
+  while (moonValues.length < state.moon.questions.length) moonValues.push(null);
+  moonValues = moonValues.slice(0, state.moon.questions.length);
+
+  var container = document.getElementById('moon-questionsContainer');
+  container.innerHTML = '';
+  state.moon.questions.forEach(function(q, i) {
+    (function(qi) {
+      var card = document.createElement('div');
+      card.className = 'q-card';
+      var text = document.createElement('div'); text.className = 'q-card-text'; text.textContent = q;
+      var grid = document.createElement('div'); grid.className = 'num-grid'; grid.id = 'moon-ng-' + qi;
+      card.appendChild(text); card.appendChild(grid);
+      container.appendChild(card);
+      buildMoonGrid(qi);
+    })(i);
+  });
+  updateMoonSaveBar(!!saved);
+}
+
+function buildMoonGrid(qi) {
+  var grid = document.getElementById('moon-ng-' + qi); if (!grid) return;
+  grid.innerHTML = '';
+  for (var n = 1; n <= 10; n++) {
+    (function(num){
+      var btn = document.createElement('button');
+      btn.className = 'num-btn' + (moonValues[qi] === num ? ' selected' : '');
+      btn.textContent = String(num);
+      btn.onclick = (function(i,v){ return function(){ selectMoon(i,v); }; })(qi,num);
+      grid.appendChild(btn);
+    })(n);
+  }
+}
+
+function selectMoon(qi, n) { moonValues[qi] = n; buildMoonGrid(qi); updateMoonSaveBar(false); }
+
+function updateMoonSaveBar(isSaved) {
+  var info = document.getElementById('moon-saveInfo');
+  var filled = moonValues.filter(function(v){ return v !== null; }).length;
+  if (isSaved) { info.className = 'save-info saved'; info.textContent = 'Saved (' + filled + '/' + state.moon.questions.length + ')'; }
+  else { info.className = 'save-info'; info.textContent = filled === 0 ? 'Not answered' : filled + ' / ' + state.moon.questions.length + ' answered'; }
+}
+
+function saveMoon() {
+  if (moonValues.filter(function(v){ return v !== null; }).length === 0) { showToast('Answer at least one question'); return; }
+  state.moon.entries[todayKey()] = moonValues.slice();
+  persist(); updateMoonSaveBar(true); showToast('Saved');
+}
+
+/* ============================================================
+   MOON — TRENDS
+   ============================================================ */
+function setMoonRange(n, btn) {
+  state.moon.currentRange = n;
+  var btns = document.querySelectorAll('#moon-page-trends .range-btn');
+  for (var i = 0; i < btns.length; i++) btns[i].classList.remove('active');
+  btn.classList.add('active'); renderMoonTrends();
+}
+
+function renderMoonTrends() {
+  var ids = Object.keys(state.moon.charts);
+  for (var i = 0; i < ids.length; i++) { try { state.moon.charts[ids[i]].destroy(); } catch(e) {} }
+  state.moon.charts = {};
+  var keys = getKeys(state.moon.entries, state.moon.currentRange);
+  var container = document.getElementById('moon-trendsContainer');
+  container.innerHTML = '';
+  if (!keys.length) { container.innerHTML = '<div class="empty">No data yet.</div>'; return; }
+  var labels = keys.map(function(k){ var d = new Date(k+'T12:00:00'); return (d.getMonth()+1)+'/'+d.getDate(); });
+
+  state.moon.questions.forEach(function(q, qi) {
+    var vals = keys.map(function(k){ var e = state.moon.entries[k]; return (e && e[qi] != null) ? e[qi] : null; });
+    var valid = vals.filter(function(v){ return v !== null; });
+    if (!valid.length) return;
+    var a = calcAvg(valid); var col = scoreColor(a);
+    var best = Math.max.apply(null,valid); var worst = Math.min.apply(null,valid);
+    var h = Math.max(1,Math.floor(valid.length/2));
+    var tr = calcAvg(valid.slice(valid.length-h)) - calcAvg(valid.slice(0,h));
+    var trStr = (tr>=0?'+':'')+tr.toFixed(1); var trCol = tr>=0?'#2d7a4f':'#b02a2a';
+    var cid = 'moon-cq'+qi;
+    var card = document.createElement('div'); card.className = 'trend-card';
+    card.innerHTML = '<div class="trend-header"><div class="trend-q">'+q+'</div><div class="trend-avg" style="color:'+col.text+'">'+a.toFixed(1)+'</div></div>' +
+      '<div class="trend-meta"><div class="trend-meta-item">Best <strong>'+best+'</strong></div><div class="trend-meta-item">Worst <strong>'+worst+'</strong></div>' +
+      '<div class="trend-meta-item">Trend <strong style="color:'+trCol+'">'+trStr+'</strong></div><div class="trend-meta-item">Days <strong>'+valid.length+'</strong></div></div>' +
+      '<canvas id="'+cid+'" height="90"></canvas>';
+    container.appendChild(card);
+    setTimeout(function(){
+      var ctx = document.getElementById(cid); if(!ctx) return;
+      state.moon.charts[cid] = new Chart(ctx,{type:'line',data:{labels:labels,datasets:[{data:vals,borderColor:col.text,backgroundColor:col.bg,borderWidth:2,fill:true,tension:0.35,pointRadius:keys.length>20?0:3,pointBackgroundColor:col.text,spanGaps:true}]},
+        options:{responsive:true,plugins:{legend:{display:false},tooltip:{backgroundColor:'#fff',borderColor:'#e0deda',borderWidth:1,titleColor:'#6b6b6b',bodyColor:'#1a1a1a',callbacks:{label:function(c){return ' '+c.raw+' / 10';}}}},
+        scales:{y:{min:0,max:10,grid:{color:'#f0efe9'},ticks:{color:'#aaa',font:{size:10},stepSize:2}},x:{grid:{display:false},ticks:{color:'#aaa',font:{size:10},maxTicksLimit:7}}}}});
+    },0);
+  });
+}
+
+/* ============================================================
+   MOON — MONTH
+   ============================================================ */
+function changeMoonMonth(dir) {
+  state.moon.currentMonth = new Date(state.moon.currentMonth.getFullYear(), state.moon.currentMonth.getMonth() + dir, 1);
+  state.moon.selectedDay = null; renderMoonMonth();
+}
+function renderMoonMonth() {
+  renderCalendar(
+    state.moon.currentMonth, state.moon.entries, state.moon.selectedDay,
+    function(key){ state.moon.selectedDay = key; renderMoonMonth(); },
+    function(entry) {
+      var rows = '';
+      state.moon.questions.forEach(function(q,i){
+        if (entry[i] != null) {
+          var col = scoreColor(entry[i]);
+          rows += '<div class="detail-row"><div class="detail-q">'+q+'</div><div class="detail-val"><span class="detail-chip" style="color:'+col.text+';background:'+col.bg+'">'+entry[i]+'</span></div></div>';
+        }
+      });
+      return rows;
+    },
+    'moon-calGrid', 'moon-monthLabel', 'moon-dayDetail'
+  );
+}
+
+/* ============================================================
+   MOON — SETTINGS
+   ============================================================ */
+function renderMoonSettings() {
+  var c = document.getElementById('moon-questionsEdit'); c.innerHTML = '';
+  state.moon.questions.forEach(function(q,i){
+    (function(idx){
+      var card = document.createElement('div'); card.className = 'q-edit-card';
+      var num = document.createElement('div'); num.className = 'q-num'; num.textContent = String(idx+1);
+      var ta = document.createElement('textarea'); ta.className = 'q-input'; ta.id = 'mq-'+idx; ta.rows = 2; ta.value = q;
+      var del = document.createElement('button'); del.className = 'q-delete'; del.textContent = '\u00d7';
+      del.onclick = (function(i){ return function(){ deleteMoonQ(i); }; })(idx);
+      card.appendChild(num); card.appendChild(ta); card.appendChild(del); c.appendChild(card);
+    })(i);
+  });
+}
+function deleteMoonQ(i) {
+  if (state.moon.questions.length <= 1) { showToast('Need at least 1 question'); return; }
+  state.moon.questions.splice(i,1); renderMoonSettings();
+}
+function addMoonQuestion() {
+  state.moon.questions.push('');
+  renderMoonSettings();
   setTimeout(function() {
-    var el = document.getElementById('qedit-' + (state.questions.length - 1));
-    if (el) el.focus();
+    var all = document.querySelectorAll('[id^="mq-"]');
+    if (all.length) all[all.length-1].focus();
   }, 50);
 }
-
-function deleteQuestion(i) {
-  if (state.questions.length <= 1) { showToast('Must have at least 1 question'); return; }
-  state.questions.splice(i, 1);
-  renderSettings();
-}
-
-function saveSettings() {
+function saveMoonSettings() {
   var newQs = [];
-  var inputs = document.querySelectorAll('[id^="qedit-"]');
-  for (var i = 0; i < inputs.length; i++) {
-    var v = inputs[i].value.trim();
-    if (v) newQs.push(v);
-  }
+  document.querySelectorAll('[id^="mq-"]').forEach(function(ta){ var v = ta.value.trim(); if(v) newQs.push(v); });
   if (!newQs.length) { showToast('Add at least 1 question'); return; }
-  state.questions = newQs;
-  persist();
-  renderToday();
-  showToast('Settings saved');
+  state.moon.questions = newQs; persist(); renderMoonToday(); showToast('Settings saved');
 }
 
-function exportData() {
-  var json = JSON.stringify({ questions: state.questions, entries: state.entries }, null, 2);
-  var blob = new Blob([json], { type: 'application/json' });
-  var a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'daily-questions-' + todayKey() + '.json';
-  a.click();
-  showToast('Exported');
+/* ============================================================
+   SHARED CALENDAR
+   ============================================================ */
+function renderCalendar(currentMonth, entries, selectedDay, onSelect, buildRows, gridId, labelId, detailId) {
+  var MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById(labelId).textContent = MONTHS[currentMonth.getMonth()] + ' ' + currentMonth.getFullYear();
+  var grid = document.getElementById(gridId); grid.innerHTML = '';
+  ['Mo','Tu','We','Th','Fr','Sa','Su'].forEach(function(d){ var h = document.createElement('div'); h.className='cal-head'; h.textContent=d; grid.appendChild(h); });
+  var firstDow = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1).getDay();
+  var start = firstDow === 0 ? 6 : firstDow - 1;
+  for (var i = 0; i < start; i++) { var e = document.createElement('div'); e.className='cal-day empty'; e.innerHTML='<div class="cal-num"></div>'; grid.appendChild(e); }
+  var dim = new Date(currentMonth.getFullYear(), currentMonth.getMonth()+1, 0).getDate();
+  var todayStr = todayKey();
+  for (var d = 1; d <= dim; d++) {
+    (function(day){
+      var key = currentMonth.getFullYear()+'-'+pad(currentMonth.getMonth()+1)+'-'+pad(day);
+      var entry = entries[key];
+      var cell = document.createElement('div');
+      var cls = 'cal-day' + (entry?' has-data':'') + (key===todayStr?' today':'') + (key===selectedDay?' sel-day':'');
+      cell.className = cls;
+      var numDiv = document.createElement('div'); numDiv.className='cal-num'; numDiv.textContent=String(day); cell.appendChild(numDiv);
+      if (entry) { var dot = document.createElement('div'); dot.className='cal-dot'; dot.style.background='#2d7a4f'; cell.appendChild(dot); cell.onclick=function(){ onSelect(key); }; }
+      grid.appendChild(cell);
+    })(d);
+  }
+  var detailDiv = document.getElementById(detailId);
+  if (selectedDay && entries[selectedDay]) {
+    var entry = entries[selectedDay];
+    var d2 = new Date(selectedDay+'T12:00:00');
+    var DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    var MONTHS2 = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    var rows = buildRows(entry);
+    detailDiv.innerHTML = '<div class="day-detail"><div class="day-detail-title">'+DAYS[d2.getDay()]+', '+MONTHS2[d2.getMonth()]+' '+d2.getDate()+'</div>'+(rows||'<div style="color:#aaa;font-size:12px">No data</div>')+'</div>';
+  } else { detailDiv.innerHTML = ''; }
 }
 
-function confirmClear() {
-  if (confirm('Delete all data? This cannot be undone.')) {
-    state.entries = {};
+/* ============================================================
+   EXPORT / CLEAR
+   ============================================================ */
+function exportData(proto) {
+  var data = proto === 'sun'
+    ? { entries: state.sun.entries }
+    : { questions: state.moon.questions, entries: state.moon.entries };
+  var blob = new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  var a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'daily-'+proto+'-'+todayKey()+'.json'; a.click(); showToast('Exported');
+}
+function confirmClear(proto) {
+  if (confirm('Delete all '+(proto==='sun'?'morning':'evening')+' data? Cannot be undone.')) {
+    if (proto==='sun') { state.sun.entries={}; state.sun.draft=null; }
+    else state.moon.entries={};
     persist();
-    renderToday();
+    if (proto===state.currentProto) showPage('today');
     showToast('Data deleted');
   }
 }
 
+/* ============================================================
+   INIT
+   ============================================================ */
 loadState();
 renderDate();
-renderToday();
+checkNewDay();
+renderSunToday();
+renderMoonToday();
 </script>
 </body>
 </html>
